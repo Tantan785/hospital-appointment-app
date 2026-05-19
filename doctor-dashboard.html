@@ -45,7 +45,31 @@ fetch("header.html")
 
 fetch("doctor-navbar.html")
 .then(r => r.text())
-.then(d => document.getElementById("navbar").innerHTML = d);
+.then(d => {
+
+document.getElementById("navbar").innerHTML = d;
+
+const currentPage =
+window.location.pathname
+.split("/")
+.pop();
+
+document
+.querySelectorAll(".nav-item")
+.forEach(item => {
+
+if (
+item.getAttribute("onclick") &&
+item.getAttribute("onclick").includes(currentPage)
+) {
+
+item.classList.add("active");
+
+}
+
+});
+
+});
 
 </script>
 
@@ -72,6 +96,8 @@ const doctors = snapshot.val();
 
 let foundDoctor = null;
 
+if (doctors) {
+
 for (let id in doctors) {
 
 if (
@@ -81,6 +107,8 @@ doctors[id].email.toLowerCase() === user.email.toLowerCase()
 
 foundDoctor = id;
 break;
+
+}
 
 }
 
@@ -133,6 +161,8 @@ const a = data[uid][id];
 
 if (a.doctorId !== currentDoctorId) continue;
 
+const status = a.status || "Pending";
+
 html += `
 
 <div class="appointment-card">
@@ -150,13 +180,13 @@ html += `
 
 <p>
 <strong>Status:</strong>
-<span class="status-badge">
-${a.status || "Pending"}
+<span class="status-badge status-${status.toLowerCase()}">
+${status}
 </span>
 </p>
 
 ${
-a.status === "Declined"
+status === "Declined"
 ?
 `
 <p style="color:#ef4444;">
@@ -169,7 +199,7 @@ ${a.declineReason || "No reason provided"}
 }
 
 ${
-(a.status === "Accepted" || a.status === "Declined")
+status === "Accepted" || status === "Declined"
 ?
 ""
 :
@@ -250,6 +280,38 @@ updatedAt: new Date().toISOString()
 alert("Appointment declined.");
 
 };
+
+</script>
+
+<script>
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+if (!navbar) return;
+
+const currentScroll =
+window.pageYOffset;
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add("navbar-hide");
+
+}
+
+else {
+
+navbar.classList.remove("navbar-hide");
+
+}
+
+lastScroll = currentScroll;
+
+});
 
 </script>
 
