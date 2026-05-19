@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Calendar - Hospital Appointment</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="card">
+
+<h1>Appointment Calendar</h1>
+
+<input
+type="date"
+id="calendarDate"
+onchange="loadCalendarAppointments()"
+>
+
+<a href="home.html" class="btn secondary">
+Back to Home
+</a>
+
+</div>
+
+<div class="card">
+
+<h2>Appointments on Selected Date</h2>
+
+<div id="calendarList">
+Select a date to view appointments.
+</div>
+
+</div>
+
+</div>
+
+<script type="module" src="firebase.js"></script>
+
+<script>
+
+let currentUser;
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+
+}
+
+else {
+
+currentUser = user;
+
+}
+
+});
+
+function loadCalendarAppointments() {
+
+const selectedDate =
+document.getElementById("calendarDate").value;
+
+const appointmentsRef =
+ref(db, "appointments/" + currentUser.uid);
+
+onValue(appointmentsRef, snapshot => {
+
+const data = snapshot.val();
+
+if (!data) {
+
+document.getElementById("calendarList")
+.innerHTML =
+"No appointments found.";
+
+return;
+
+}
+
+let html = "";
+
+for (let id in data) {
+
+let a = data[id];
+
+if (a.date === selectedDate) {
+
+html += `
+<div class="item">
+
+<h3>
+
+${a.date} — ${a.time}
+
+</h3>
+
+<p>
+
+Doctor:
+<b>${a.doctor}</b>
+
+</p>
+
+<p>
+
+Location:
+<b>${a.location}</b>
+
+</p>
+
+<p>
+
+Status:
+<span class="badge">
+
+${a.status}
+
+</span>
+
+</p>
+
+</div>
+`;
+
+}
+
+}
+
+if (html === "") {
+
+html =
+"No appointments for this date.";
+
+}
+
+document.getElementById("calendarList")
+.innerHTML =
+html;
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>

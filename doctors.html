@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Doctors</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<!-- HEADER -->
+
+<div class="header-gradient">
+
+<h2>
+Doctor Appointment
+</h2>
+
+<p>
+Find available doctors
+</p>
+
+</div>
+
+<!-- SEARCH BAR -->
+
+<div class="card search-card">
+
+<input
+type="text"
+id="searchDoctor"
+class="search-input"
+placeholder="Search doctor..."
+>
+
+</div>
+
+<!-- DOCTOR LIST -->
+
+<div id="doctorsList">
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<!-- LOAD HEADER + NAVBAR -->
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let doctorsData = {};
+
+/* CHECK USER */
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+
+return;
+
+}
+
+loadDoctors();
+
+});
+
+/* LOAD DOCTORS FROM DATABASE */
+
+function loadDoctors() {
+
+onValue(
+ref(db, "doctors"),
+snapshot => {
+
+const data = snapshot.val();
+
+if (!data) {
+
+doctorsList.innerHTML =
+'<div class="card">No doctors available.</div>';
+
+return;
+
+}
+
+doctorsData = data;
+
+renderDoctors(data);
+
+});
+
+}
+
+/* SEARCH FUNCTION */
+
+searchDoctor.addEventListener(
+"input",
+function () {
+
+const keyword =
+this.value.toLowerCase();
+
+let filtered = {};
+
+for (let id in doctorsData) {
+
+let d =
+doctorsData[id];
+
+if (
+
+d.name
+.toLowerCase()
+.includes(keyword)
+
+||
+
+d.specialty
+.toLowerCase()
+.includes(keyword)
+
+) {
+
+filtered[id] = d;
+
+}
+
+}
+
+renderDoctors(filtered);
+
+});
+
+/* RENDER DOCTORS */
+
+function renderDoctors(data) {
+
+let html = "";
+
+for (let id in data) {
+
+const d = data[id];
+
+html += `
+
+<div class="doctor-card">
+
+<img
+class="doctor-avatar"
+src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png"
+>
+
+<div>
+
+<h3>
+${d.name}
+</h3>
+
+<p>
+Specialty:
+${d.specialty}
+</p>
+
+<p>
+Room:
+${d.room}
+</p>
+
+<p>
+Schedule:
+${d.schedule}
+</p>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+doctorsList.innerHTML =
+html;
+
+}
+
+</script>
+<script>
+
+/* NAVBAR AUTO HIDE / SHOW */
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+const currentScroll =
+window.pageYOffset;
+
+if (!navbar) return;
+
+/* SCROLL DOWN */
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add(
+"navbar-hide"
+);
+
+}
+
+/* SCROLL UP */
+
+else {
+
+navbar.classList.remove(
+"navbar-hide"
+);
+
+}
+
+lastScroll = currentScroll;
+
+});
+
+</script>
+</body>
+</html>

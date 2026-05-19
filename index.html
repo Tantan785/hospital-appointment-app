@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Home</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<!-- GREETING -->
+
+<div class="header-gradient">
+
+<h2 id="welcomeText">
+Hello
+</h2>
+
+<p id="todayDate"></p>
+
+</div>
+
+<!-- DASHBOARD SUMMARY -->
+
+<div class="dashboard-row">
+
+<div class="dashboard-card">
+
+<h3>
+Today's Appointments
+</h3>
+
+<p id="todayCount">
+0
+</p>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>
+Notifications
+</h3>
+
+<p id="notificationCount">
+0
+</p>
+
+</div>
+
+</div>
+
+<!-- NEXT APPOINTMENT -->
+
+<div class="card">
+
+<h3 class="section-title">
+
+Next Appointment
+
+</h3>
+
+<div id="nextAppointment">
+
+Loading...
+
+</div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+
+<div class="card">
+
+<h3 class="section-title">
+
+Quick Actions
+
+</h3>
+
+<div class="grid">
+
+<div
+class="action-card"
+onclick="location.href='appointments.html'"
+>
+
+<img
+class="action-icon"
+src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png"
+>
+
+Book Appointment
+
+</div>
+
+<div
+class="action-card"
+onclick="location.href='doctors.html'"
+>
+
+<img
+class="action-icon"
+src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png"
+>
+
+Doctors
+
+</div>
+
+<div
+class="action-card"
+onclick="location.href='locations.html'"
+>
+
+<img
+class="action-icon"
+src="https://cdn-icons-png.flaticon.com/512/684/684908.png"
+>
+
+Hospitals
+
+</div>
+
+<div
+class="action-card"
+onclick="location.href='profile.html'"
+>
+
+<img
+class="action-icon"
+src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png"
+>
+
+Profile
+
+</div>
+
+</div>
+
+</div>
+
+<!-- SERVICES -->
+
+<div class="card">
+
+<h3 class="section-title">
+
+Health Services
+
+</h3>
+
+<div class="service-grid">
+
+<div class="service-card">
+
+<img
+class="service-icon"
+src="https://cdn-icons-png.flaticon.com/512/2967/2967350.png"
+>
+
+Consultation
+
+</div>
+
+<div class="service-card">
+
+<img
+class="service-icon"
+src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png"
+>
+
+Doctor Visit
+
+</div>
+
+<div class="service-card">
+
+<img
+class="service-icon"
+src="https://cdn-icons-png.flaticon.com/512/3209/3209265.png"
+>
+
+Medicine
+
+</div>
+
+<div class="service-card">
+
+<img
+class="service-icon"
+src="https://cdn-icons-png.flaticon.com/512/2966/2966484.png"
+>
+
+Checkup
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let currentUser;
+
+/* CHECK USER */
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+currentUser = user;
+
+loadGreeting();
+loadNextAppointment();
+countTodayAppointments();
+loadNotificationCount();
+
+});
+
+/* GREETING */
+
+function loadGreeting() {
+
+onValue(
+ref(db, "users/" + currentUser.uid),
+snapshot => {
+
+const data = snapshot.val();
+
+let name =
+data?.fullName ||
+currentUser.email;
+
+welcomeText.innerText =
+"Hello, " + name;
+
+});
+
+}
+
+/* DATE */
+
+let today =
+new Date();
+
+todayDate.innerText =
+today.toLocaleDateString();
+
+/* NEXT APPOINTMENT */
+
+function loadNextAppointment() {
+
+onValue(
+ref(db, "appointments/" + currentUser.uid),
+snapshot => {
+
+const data =
+snapshot.val();
+
+if (!data) {
+
+nextAppointment.innerHTML =
+"No upcoming appointments.";
+
+return;
+
+}
+
+let first = null;
+
+for (let id in data) {
+
+first = data[id];
+
+break;
+
+}
+
+if (first) {
+
+nextAppointment.innerHTML = `
+
+<p>
+Doctor: ${first.doctorName}
+</p>
+
+<p>
+Date: ${first.date}
+</p>
+
+<p>
+Time: ${first.time}
+</p>
+
+`;
+
+}
+
+});
+
+}
+
+/* TODAY COUNT */
+
+function countTodayAppointments() {
+
+let todayStr =
+new Date().toISOString().split("T")[0];
+
+onValue(
+ref(db, "appointments/" + currentUser.uid),
+snapshot => {
+
+const data =
+snapshot.val();
+
+if (!data) {
+
+todayCount.innerText = 0;
+return;
+
+}
+
+let count = 0;
+
+for (let id in data) {
+
+if (data[id].date === todayStr) {
+
+count++;
+
+}
+
+}
+
+todayCount.innerText = count;
+
+});
+
+}
+
+/* NOTIFICATIONS */
+
+function loadNotificationCount() {
+
+onValue(
+ref(db, "appointments/" + currentUser.uid),
+snapshot => {
+
+const data =
+snapshot.val();
+
+if (!data) {
+
+notificationCount.innerText = 0;
+return;
+
+}
+
+let count = 0;
+
+for (let id in data) {
+
+count++;
+
+}
+
+notificationCount.innerText = count;
+
+});
+
+}
+
+</script>
+<script>
+
+/* NAVBAR AUTO HIDE / SHOW */
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+const currentScroll =
+window.pageYOffset;
+
+if (!navbar) return;
+
+/* SCROLL DOWN */
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add(
+"navbar-hide"
+);
+
+}
+
+/* SCROLL UP */
+
+else {
+
+navbar.classList.remove(
+"navbar-hide"
+);
+
+}
+
+lastScroll = currentScroll;
+
+});
+
+</script>
+</body>
+</html>

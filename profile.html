@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Profile</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<!-- HEADER -->
+
+<div class="header-gradient">
+
+<h2>
+My Profile
+</h2>
+
+<p>
+Manage your personal information
+</p>
+
+</div>
+
+<!-- PROFILE CARD -->
+
+<div class="card profile-card">
+
+<img
+class="profile-avatar"
+src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png"
+>
+
+<h3 id="profileName">
+
+Loading...
+
+</h3>
+
+<p class="profile-email" id="profileEmail">
+
+Loading...
+
+</p>
+
+</div>
+
+<!-- EDIT PROFILE -->
+
+<div class="card">
+
+<h3 class="section-title">
+
+Edit Information
+
+</h3>
+
+<input
+type="text"
+id="fullName"
+placeholder="Full Name"
+>
+
+<input
+type="text"
+id="phone"
+placeholder="Contact Number"
+>
+
+<input
+type="email"
+id="email"
+placeholder="Email Address"
+disabled
+>
+
+<button
+class="primary"
+onclick="saveProfile()"
+>
+
+Save Changes
+
+</button>
+
+</div>
+
+<!-- LOGOUT -->
+
+<div class="card">
+
+<button
+class="danger"
+onclick="logoutUser()"
+>
+
+Log Out
+
+</button>
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let currentUser;
+
+/* CHECK USER */
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+
+return;
+
+}
+
+currentUser = user;
+
+loadProfile();
+
+});
+
+/* LOAD PROFILE */
+
+function loadProfile() {
+
+onValue(
+ref(db, "users/" + currentUser.uid),
+snapshot => {
+
+const data = snapshot.val();
+
+if (!data) return;
+
+profileName.innerText =
+data.fullName;
+
+profileEmail.innerText =
+data.email;
+
+fullName.value =
+data.fullName;
+
+phone.value =
+data.phone;
+
+email.value =
+data.email;
+
+});
+
+}
+
+/* SAVE PROFILE */
+
+window.saveProfile =
+function () {
+
+update(
+ref(db, "users/" + currentUser.uid),
+{
+
+fullName:
+fullName.value,
+
+phone:
+phone.value
+
+}
+
+);
+
+alert(
+"Profile updated successfully"
+);
+
+};
+
+/* LOGOUT */
+
+window.logoutUser =
+async function () {
+
+await logout();
+
+window.location.href =
+"login.html";
+
+};
+
+</script>
+<script>
+
+/* NAVBAR AUTO HIDE / SHOW */
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+const currentScroll =
+window.pageYOffset;
+
+if (!navbar) return;
+
+/* SCROLL DOWN */
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add(
+"navbar-hide"
+);
+
+}
+
+/* SCROLL UP */
+
+else {
+
+navbar.classList.remove(
+"navbar-hide"
+);
+
+}
+
+lastScroll = currentScroll;
+
+});
+
+</script>
+</body>
+</html>

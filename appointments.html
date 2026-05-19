@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Appointments</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<div class="card page-title">
+<h1>Appointments</h1>
+<p>Book and manage your hospital appointments.</p>
+</div>
+
+<div class="card">
+
+<h2>Book Appointment</h2>
+
+<select id="doctor">
+<option value="">Select Doctor</option>
+</select>
+
+<input type="date" id="date">
+
+<select id="time">
+<option value="">Select Time</option>
+</select>
+
+<input type="text" id="patientName" placeholder="Patient Name">
+
+<input type="number" id="age" placeholder="Age">
+
+<select id="gender">
+<option value="">Select Gender</option>
+<option>Male</option>
+<option>Female</option>
+</select>
+
+<input type="text" id="contact" placeholder="Contact Number">
+
+<textarea id="reason" placeholder="Reason for Consultation"></textarea>
+
+<button class="primary" onclick="bookAppointment()">
+Book Appointment
+</button>
+
+</div>
+
+<div id="appointmentsList">
+<div class="card">Loading appointments...</div>
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => {
+
+document.getElementById("navbar").innerHTML = d;
+
+const currentPage =
+window.location.pathname
+.split("/")
+.pop();
+
+document
+.querySelectorAll(".nav-item")
+.forEach(item => {
+
+if (
+item.getAttribute("onclick") &&
+item.getAttribute("onclick").includes(currentPage)
+) {
+
+item.classList.add("active");
+
+}
+
+});
+
+});
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let currentUser;
+let doctorsData = {};
+let bookedTimes = [];
+
+checkUser(user => {
+
+if (!user) {
+window.location.href = "login.html";
+return;
+}
+
+currentUser = user;
+
+loadDoctors();
+loadAppointments();
+
+});
+
+function loadDoctors() {
+
+onValue(ref(db, "doctors"), snapshot => {
+
+doctorsData = snapshot.val() || {};
+
+doctor.innerHTML =
+'<option value="">Select Doctor</option>';
+
+for (let id in doctorsData) {
+
+doctor.innerHTML += `
+<option value="${id}">
+${doctorsData[id].name}
+</option>
+`;
+
+}
+
+});
+
+}
+
+doctor.addEventListener("change", loadTime);
+date.addEventListener("change", loadTime);
+
+function loadTime() {
+
+if (!doctor.value || !date.value) return;
+
+bookedTimes = [];
+
+onValue(ref(db, "appointments"), snapshot => {
+
+const allAppointments = snapshot.val();
+
+if (allAppointments) {
+
+for (let uid in allAppointments) {
+
+for (let id in allAppointments[uid]) {
+
+const a = allAppointments[uid][id];
+
+if (
+a.doctorId === doctor.value &&
+a.date === date.value &&
+a.status !== "Declined"
+) {
+
+bookedTimes.push(a.time);
+
+}
+
+}
+
+}
+
+}
+
+loadSchedule();
+
+}, { onlyOnce: true });
+
+}
+
+function loadSchedule() {
+
+onValue(
+ref(db, "schedules/" + doctor.value),
+snapshot => {
+
+const data = snapshot.val();
+
+time.innerHTML =
+'<option value="">Select Time</option>';
+
+if (!data || !data.times) {
+
+time.innerHTML +=
+'<option>No schedule available</option>';
+
+return;
+
+}
+
+data.times.forEach(t => {
+
+if (bookedTimes.includes(t)) {
+
+time.innerHTML += `
+<option disabled>
+${t} (Booked)
+</option>
+`;
+
+} else {
+
+time.innerHTML += `
+<option value="${t}">
+${t}
+</option>
+`;
+
+}
+
+});
+
+},
+{ onlyOnce: true }
+);
+
+}
+
+window.bookAppointment = function () {
+
+if (
+!doctor.value ||
+!date.value ||
+!time.value ||
+!patientName.value ||
+!age.value ||
+!gender.value ||
+!contact.value ||
+!reason.value
+) {
+
+alert("Please complete all fields");
+return;
+
+}
+
+if (bookedTimes.includes(time.value)) {
+
+alert("This time slot is already booked");
+return;
+
+}
+
+const queueNumber =
+Math.floor(100 + Math.random() * 900);
+
+const newRef =
+push(
+ref(
+db,
+"appointments/" +
+currentUser.uid
+)
+);
+
+set(newRef, {
+
+doctorId: doctor.value,
+doctorName: doctorsData[doctor.value].name,
+
+date: date.value,
+time: time.value,
+
+patientName: patientName.value,
+age: age.value,
+gender: gender.value,
+contact: contact.value,
+reason: reason.value,
+
+queueNumber: queueNumber,
+
+status: "Pending",
+
+createdAt:
+new Date().toISOString()
+
+});
+
+alert(
+"Appointment booked successfully.\nQueue Number: " +
+queueNumber
+);
+
+};
+
+function loadAppointments() {
+
+onValue(
+ref(
+db,
+"appointments/" +
+currentUser.uid
+),
+snapshot => {
+
+const data = snapshot.val();
+
+if (!data) {
+
+appointmentsList.innerHTML =
+'<div class="card empty-card">No appointments found.</div>';
+
+return;
+
+}
+
+let html = "";
+
+for (let id in data) {
+
+const a = data[id];
+
+const status =
+a.status || "Pending";
+
+html += `
+
+<div class="appointment-card">
+
+<h2>${a.doctorName}</h2>
+
+<p><strong>Date:</strong> ${a.date}</p>
+
+<p><strong>Time:</strong> ${a.time}</p>
+
+<p><strong>Patient:</strong> ${a.patientName}</p>
+
+<p><strong>Contact:</strong> ${a.contact}</p>
+
+<p><strong>Reason:</strong> ${a.reason}</p>
+
+<p><strong>Queue Number:</strong> ${a.queueNumber}</p>
+
+<p>
+<strong>Status:</strong>
+<span class="status-badge status-${status.toLowerCase()}">
+${status}
+</span>
+</p>
+
+${
+status === "Declined"
+?
+`
+<p style="color:#ef4444;">
+<strong>Doctor Reason:</strong>
+${a.declineReason || "No reason provided"}
+</p>
+`
+:
+""
+}
+
+${
+status === "Pending"
+?
+`
+<button
+class="danger"
+onclick="cancelAppointment('${id}')"
+>
+Cancel Appointment
+</button>
+`
+:
+""
+}
+
+</div>
+
+`;
+
+}
+
+appointmentsList.innerHTML = html;
+
+});
+
+}
+
+window.cancelAppointment = function (id) {
+
+remove(
+ref(
+db,
+"appointments/" +
+currentUser.uid +
+"/" +
+id
+)
+);
+
+};
+
+</script>
+
+<script>
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+if (!navbar) return;
+
+const currentScroll =
+window.pageYOffset;
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add("navbar-hide");
+
+}
+
+else {
+
+navbar.classList.remove("navbar-hide");
+
+}
+
+lastScroll = currentScroll;
+
+});
+
+</script>
+
+</body>
+</html>

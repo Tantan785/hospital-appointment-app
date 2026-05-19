@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Appointment History</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<!-- PAGE TITLE -->
+
+<div class="card page-title">
+
+<h1>Appointment History</h1>
+
+<p>View your previous and completed appointments.</p>
+
+</div>
+
+
+<!-- ACTIVE APPOINTMENTS -->
+
+<div class="card">
+
+<h2>Active Appointments</h2>
+
+<div id="activeAppointments">
+
+Loading...
+
+</div>
+
+</div>
+
+
+<!-- COMPLETED APPOINTMENTS -->
+
+<div class="card">
+
+<h2>Completed Appointments</h2>
+
+<div id="completedAppointments">
+
+Loading...
+
+</div>
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+
+<!-- LOAD HEADER + NAVBAR -->
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => header.innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => navbar.innerHTML = d);
+
+</script>
+
+
+<script type="module">
+
+import "./firebase.js";
+
+let currentUser;
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+return;
+
+}
+
+currentUser = user;
+
+loadHistory();
+
+});
+
+
+function loadHistory() {
+
+onValue(
+ref(db,
+"appointments/" + currentUser.uid
+),
+snapshot => {
+
+const data = snapshot.val();
+
+if (!data) {
+
+activeAppointments.innerHTML =
+"No appointments";
+
+completedAppointments.innerHTML =
+"No completed appointments";
+
+return;
+
+}
+
+let activeHTML = "";
+let completedHTML = "";
+
+for (let id in data) {
+
+const a = data[id];
+
+const card = `
+
+<div class="history-card">
+
+<h3>
+${a.doctorName}
+</h3>
+
+<p>
+<strong>Date:</strong>
+${a.date}
+</p>
+
+<p>
+<strong>Time:</strong>
+${a.time}
+</p>
+
+<p>
+<strong>Patient:</strong>
+${a.patientName}
+</p>
+
+<p>
+<strong>Queue Number:</strong>
+${a.queueNumber || "-"}
+</p>
+
+<p>
+<strong>Status:</strong>
+
+<span class="status-badge">
+
+${a.status}
+
+</span>
+
+</p>
+
+</div>
+
+`;
+
+if (a.status === "Completed") {
+
+completedHTML += card;
+
+} else {
+
+activeHTML += card;
+
+}
+
+}
+
+activeAppointments.innerHTML =
+activeHTML || "No active appointments";
+
+completedAppointments.innerHTML =
+completedHTML || "No completed appointments";
+
+});
+
+}
+
+</script>
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => {
+
+document.getElementById("navbar").innerHTML = d;
+
+/* ACTIVE NAVBAR HIGHLIGHT */
+
+const currentPage =
+window.location.pathname
+.split("/")
+.pop();
+
+document
+.querySelectorAll(".nav-item")
+.forEach(item => {
+
+if (
+item.getAttribute("onclick")
+.includes(currentPage)
+) {
+
+item.classList.add("active");
+
+}
+
+});
+
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Firebase Test</h1>
+
+<button onclick="testWrite()">Test Database Write</button>
+
+<script type="module" src="firebase.js"></script>
+
+<script>
+function testWrite() {
+  set(ref(db, "test/message"), {
+    text: "Firebase is working",
+    time: new Date().toISOString()
+  })
+  .then(() => alert("Database working!"))
+  .catch(error => alert(error.message));
+}
+</script>
+
+</body>
+</html>

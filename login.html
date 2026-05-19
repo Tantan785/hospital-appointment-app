@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="auth-container">
+  <div class="auth-card">
+
+    <img class="auth-logo" src="https://cdn-icons-png.flaticon.com/512/2967/2967350.png">
+
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-subtitle">Login to your hospital account</p>
+
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="password" id="password" placeholder="Password">
+
+    <button class="primary" onclick="loginUser()">Login</button>
+
+    <div class="divider">OR CONTINUE WITH</div>
+
+    <div class="social-grid">
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png">
+        Gmail
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/597/597177.png">
+        Phone
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png">
+        Facebook
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png">
+        X
+      </button>
+    </div>
+
+    <p class="auth-link">
+      Don't have an account?
+      <a href="signup.html">Create Account</a>
+    </p>
+
+  </div>
+</div>
+
+<script type="module">
+
+import "./firebase.js";
+
+window.loginUser = async function () {
+
+  if (!email.value || !password.value) {
+    alert("Please enter email and password");
+    return;
+  }
+
+  try {
+    const userCredential = await loginEmail(email.value, password.value);
+    const user = userCredential.user;
+
+    onValue(
+      ref(db, "doctors"),
+      snapshot => {
+        const doctors = snapshot.val();
+        let isDoctor = false;
+
+        if (doctors) {
+          for (let id in doctors) {
+            if (
+              doctors[id].email &&
+              doctors[id].email.toLowerCase() === user.email.toLowerCase()
+            ) {
+              isDoctor = true;
+              break;
+            }
+          }
+        }
+
+        if (isDoctor) {
+          window.location.href = "doctor-dashboard.html";
+        } else {
+          window.location.href = "index.html";
+        }
+      },
+      { onlyOnce: true }
+    );
+
+  } catch (error) {
+    alert(error.message);
+  }
+
+};
+
+</script>
+
+</body>
+</html>

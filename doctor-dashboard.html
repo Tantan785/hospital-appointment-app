@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Doctor Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<div class="card page-title">
+
+<h1>Doctor Dashboard</h1>
+
+<p>Manage patient appointments. Accept or decline bookings.</p>
+
+</div>
+
+<div id="doctorAppointments">
+
+<div class="card">
+No appointments found.
+</div>
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("doctor-navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let currentDoctorId = null;
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+return;
+
+}
+
+onValue(
+ref(db, "doctors"),
+snapshot => {
+
+const doctors = snapshot.val();
+
+let foundDoctor = null;
+
+for (let id in doctors) {
+
+if (
+doctors[id].email &&
+doctors[id].email.toLowerCase() === user.email.toLowerCase()
+) {
+
+foundDoctor = id;
+break;
+
+}
+
+}
+
+if (!foundDoctor) {
+
+alert("Access denied. Doctor account only.");
+window.location.href = "index.html";
+return;
+
+}
+
+currentDoctorId = foundDoctor;
+
+loadDoctorAppointments();
+
+},
+{
+onlyOnce: true
+}
+);
+
+});
+
+function loadDoctorAppointments() {
+
+onValue(
+ref(db, "appointments"),
+snapshot => {
+
+const data = snapshot.val();
+
+if (!data) {
+
+doctorAppointments.innerHTML =
+'<div class="card">No appointments found.</div>';
+
+return;
+
+}
+
+let html = "";
+
+for (let uid in data) {
+
+for (let id in data[uid]) {
+
+const a = data[uid][id];
+
+if (a.doctorId !== currentDoctorId) continue;
+
+html += `
+
+<div class="appointment-card">
+
+<h2>${a.patientName || "Patient"}</h2>
+
+<p><strong>Doctor:</strong> ${a.doctorName || "N/A"}</p>
+<p><strong>Date:</strong> ${a.date || "N/A"}</p>
+<p><strong>Time:</strong> ${a.time || "N/A"}</p>
+<p><strong>Age:</strong> ${a.age || "N/A"}</p>
+<p><strong>Gender:</strong> ${a.gender || "N/A"}</p>
+<p><strong>Contact:</strong> ${a.contact || "N/A"}</p>
+<p><strong>Reason:</strong> ${a.reason || "N/A"}</p>
+<p><strong>Queue:</strong> ${a.queueNumber || "-"}</p>
+
+<p>
+<strong>Status:</strong>
+<span class="status-badge">
+${a.status || "Pending"}
+</span>
+</p>
+
+${
+a.status === "Declined"
+?
+`
+<p style="color:#ef4444;">
+<strong>Decline Reason:</strong>
+${a.declineReason || "No reason provided"}
+</p>
+`
+:
+""
+}
+
+${
+(a.status === "Accepted" || a.status === "Declined")
+?
+""
+:
+`
+<div style="display:flex; gap:10px;">
+
+<button
+class="primary"
+onclick="acceptAppointment('${uid}', '${id}')"
+>
+Accept
+</button>
+
+<button
+class="danger"
+onclick="declineAppointment('${uid}', '${id}')"
+>
+Decline
+</button>
+
+</div>
+`
+}
+
+</div>
+
+`;
+
+}
+
+}
+
+doctorAppointments.innerHTML =
+html || '<div class="card">No appointments for you.</div>';
+
+});
+
+}
+
+window.acceptAppointment = function(uid, id) {
+
+update(
+ref(db, "appointments/" + uid + "/" + id),
+{
+status: "Accepted",
+declineReason: "",
+updatedAt: new Date().toISOString()
+}
+);
+
+alert("Appointment accepted.");
+
+};
+
+window.declineAppointment = function(uid, id) {
+
+const reason =
+prompt("Why are you declining this appointment?");
+
+if (reason === null) return;
+
+if (reason.trim() === "") {
+
+alert("Please enter a reason.");
+return;
+
+}
+
+update(
+ref(db, "appointments/" + uid + "/" + id),
+{
+status: "Declined",
+declineReason: reason,
+updatedAt: new Date().toISOString()
+}
+);
+
+alert("Appointment declined.");
+
+};
+
+</script>
+
+</body>
+</html>

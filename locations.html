@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hospitals</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div id="header"></div>
+
+<div class="app">
+
+<!-- HEADER -->
+
+<div class="header-gradient">
+
+<h2>
+Hospitals
+</h2>
+
+<p>
+Find hospitals and medical facilities
+</p>
+
+</div>
+
+<!-- SEARCH -->
+
+<div class="card">
+
+<input
+type="text"
+id="searchLocation"
+placeholder="Search hospital"
+class="search-input"
+>
+
+</div>
+
+<!-- HOSPITAL LIST -->
+
+<div id="locationsList">
+
+<div class="card">
+
+Loading hospitals...
+
+</div>
+
+</div>
+
+</div>
+
+<div id="navbar"></div>
+
+<!-- HEADER + NAVBAR -->
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+
+<script type="module">
+
+import "./firebase.js";
+
+let locationsData = {};
+
+/* CHECK USER */
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+loadLocations();
+
+});
+
+/* LOAD LOCATIONS */
+
+function loadLocations() {
+
+onValue(
+ref(db, "locations"),
+snapshot => {
+
+locationsData =
+snapshot.val();
+
+renderLocations(
+locationsData
+);
+
+});
+
+}
+
+/* SEARCH */
+
+searchLocation.addEventListener(
+"input",
+function () {
+
+const keyword =
+this.value.toLowerCase();
+
+let filtered = {};
+
+for (let id in locationsData) {
+
+let l =
+locationsData[id];
+
+if (
+
+l.name
+.toLowerCase()
+.includes(keyword)
+
+) {
+
+filtered[id] = l;
+
+}
+
+}
+
+renderLocations(filtered);
+
+});
+
+/* RENDER */
+
+function renderLocations(data) {
+
+if (!data) {
+
+locationsList.innerHTML =
+
+'<div class="card">No hospitals found.</div>';
+
+return;
+
+}
+
+let html = "";
+
+for (let id in data) {
+
+const l = data[id];
+
+html += `
+
+<div class="hospital-card">
+
+<div class="hospital-header">
+
+<img
+class="hospital-icon"
+src="https://cdn-icons-png.flaticon.com/512/2967/2967350.png"
+>
+
+<div>
+
+<h3>
+
+${l.name}
+
+</h3>
+
+<p class="hospital-sub">
+
+${l.description || "Medical Facility"}
+
+</p>
+
+</div>
+
+</div>
+
+<div class="hospital-details">
+
+<p>
+
+Floor: ${l.floor}
+
+</p>
+
+<p>
+
+Department: ${l.department}
+
+</p>
+
+<p>
+
+Contact: ${l.contact}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+locationsList.innerHTML =
+html;
+
+}
+
+</script>
+<script>
+
+/* NAVBAR AUTO HIDE / SHOW */
+
+let lastScroll = 0;
+
+window.addEventListener("scroll", () => {
+
+const navbar =
+document.getElementById("navbar");
+
+const currentScroll =
+window.pageYOffset;
+
+if (!navbar) return;
+
+/* SCROLL DOWN */
+
+if (currentScroll > lastScroll) {
+
+navbar.classList.add(
+"navbar-hide"
+);
+
+}
+
+/* SCROLL UP */
+
+else {
+
+navbar.classList.remove(
+"navbar-hide"
+);
+
+}
+
+lastScroll = currentScroll;
+
+});
+
+</script>
+</body>
+</html>

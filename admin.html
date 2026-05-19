@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="card">
+
+<h1>Admin Dashboard</h1>
+
+<a href="home.html" class="btn secondary">
+Back to Home
+</a>
+
+</div>
+
+<div class="card">
+
+<h2>All Appointments</h2>
+
+<div id="adminAppointments">
+Loading...
+</div>
+
+</div>
+
+</div>
+
+<script type="module" src="firebase.js"></script>
+
+<script>
+
+checkUser(user => {
+
+if (!user) {
+
+window.location.href = "login.html";
+
+}
+
+else {
+
+loadAllAppointments();
+
+}
+
+});
+
+function loadAllAppointments() {
+
+const appointmentsRef =
+ref(db, "appointments");
+
+onValue(appointmentsRef, snapshot => {
+
+const data = snapshot.val();
+
+let html = "";
+
+for (let uid in data) {
+
+for (let id in data[uid]) {
+
+let a = data[uid][id];
+
+html += `
+<div class="item">
+
+<h3>${a.name}</h3>
+
+<p>
+${a.date} — ${a.time}
+</p>
+
+<p>
+Doctor: ${a.doctor}
+</p>
+
+<p>
+Status: ${a.status}
+</p>
+
+<button onclick="updateStatus('${uid}','${id}','Approved')" class="primary">
+Approve
+</button>
+
+<button onclick="updateStatus('${uid}','${id}','Completed')" class="secondary">
+Complete
+</button>
+
+<button onclick="updateStatus('${uid}','${id}','Cancelled')" class="danger">
+Cancel
+</button>
+
+</div>
+`;
+
+}
+
+}
+
+document.getElementById("adminAppointments").innerHTML =
+html;
+
+});
+
+}
+
+async function updateStatus(uid, id, status) {
+
+await set(
+ref(db, "appointments/" + uid + "/" + id + "/status"),
+status
+);
+
+alert("Status updated");
+
+}
+
+</script>
+<div id="navbar"></div>
+
+<script>
+
+fetch("header.html")
+.then(r => r.text())
+.then(d => document.getElementById("header").innerHTML = d);
+
+fetch("navbar.html")
+.then(r => r.text())
+.then(d => document.getElementById("navbar").innerHTML = d);
+
+</script>
+</body>
+
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="auth-container">
+  <div class="auth-card">
+
+    <img class="auth-logo" src="https://cdn-icons-png.flaticon.com/512/2967/2967350.png">
+
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-subtitle">Register to start booking appointments</p>
+
+    <input type="text" id="fullName" placeholder="Full Name">
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="text" id="phone" placeholder="Contact Number">
+    <input type="password" id="password" placeholder="Password">
+
+    <button class="primary" onclick="signupUser()">Create Account</button>
+
+    <div class="divider">OR SIGN UP WITH</div>
+
+    <div class="social-grid">
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png">
+        Gmail
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/597/597177.png">
+        Phone
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png">
+        Facebook
+      </button>
+
+      <button class="social-btn" type="button">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png">
+        X
+      </button>
+    </div>
+
+    <p class="auth-link">
+      Already have an account?
+      <a href="login.html">Login</a>
+    </p>
+
+  </div>
+</div>
+
+<script type="module">
+import "./firebase.js";
+
+window.signupUser = async function () {
+  if (!fullName.value || !email.value || !phone.value || !password.value) {
+    alert("Please complete all fields");
+    return;
+  }
+
+  try {
+    const userCredential = await signupEmail(email.value, password.value);
+    const user = userCredential.user;
+
+    await set(ref(db, "users/" + user.uid), {
+      fullName: fullName.value,
+      email: email.value,
+      phone: phone.value,
+      createdAt: new Date().toISOString()
+    });
+
+    alert("Account created successfully");
+    window.location.href = "home.html";
+  } catch (error) {
+    alert(error.message);
+  }
+};
+</script>
+
+</body>
+</html>
