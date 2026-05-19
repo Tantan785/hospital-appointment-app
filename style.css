@@ -1995,3 +1995,18 @@ color: white;
 background: #ef4444;
 color: white;
 }
+.doctor-navbar .nav-item.active {
+  background: transparent !important;
+  color: #667085 !important;
+  transform: none !important;
+}
+
+.doctor-navbar .nav-item.active img {
+  filter: none !important;
+}
+
+.doctor-navbar .nav-item {
+  width: 20%;
+  min-height: 58px;
+  border-radius: 18px;
+}
